@@ -32,7 +32,7 @@
 <body>
     <div id="map-wrapper">
         <h1>Traffic Prediction & Weather Alerts</h1>
-        <div id="info-panel">
+        <div id="info-panel" class="hidden">
             <input type="text" id="source" placeholder="Enter source location">
             <input type="text" id="destination" placeholder="Enter destination">
 
@@ -41,7 +41,7 @@
                 <label for="useCurrentLocation">Use Current Location</label>
             </div>      
         </div>
-        <div class="map-buttons">
+        <div class="map-buttons" hidden>
             <button onclick="getRoute()">Get Route</button>
             <button onclick="toggleLiveTracking()">Start Tracking</button>
             <button onclick="stopLiveTracking()">Stop Tracking</button>
@@ -63,31 +63,63 @@
         </div>
     </div>
     <script>
-        let timeout;
-        const showTime = 5000; // 5 seconds
+        let panelVisible = false;
       
-        const showElements = () => {
-          document.body.classList.add('show-panel');
-          document.querySelectorAll('.map-buttons, #info-panel').forEach(el => {
-            el.classList.remove('hidden');
-          });
-          clearTimeout(timeout);
-          timeout = setTimeout(() => {
+        function showOrHidePanel() {
+          panelVisible = !panelVisible;
+      
+          if (panelVisible) {
+            document.body.classList.add('show-panel');
+            document.querySelectorAll('.map-buttons, #info-panel').forEach(el => {
+              el.classList.remove('hidden');
+            });
+          } else {
             document.body.classList.remove('show-panel');
             document.querySelectorAll('.map-buttons, #info-panel').forEach(el => {
               el.classList.add('hidden');
             });
-          }, showTime);
-        };
+          }
+        }
       
-        // Attach listener for interaction
-        document.body.addEventListener('click', showElements);
-        document.body.addEventListener('touchstart', showElements);
+        function isInteractiveElement(target) {
+          return (
+            target.closest('.map-buttons') ||
+            target.closest('#info-panel') ||
+            target.tagName === 'BUTTON' ||
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable
+          );
+        }
       
-        // Optional: Auto-show on page load
-        window.addEventListener('load', showElements);
-      </script>
+        function setupInteractionHandlers() {
+          let lastTouchTime = 0;
       
+          document.body.addEventListener('touchstart', (e) => {
+            lastTouchTime = new Date().getTime();
+            if (!isInteractiveElement(e.target)) {
+              showOrHidePanel();
+            }
+          }, { passive: true });
+      
+          document.body.addEventListener('click', (e) => {
+            const now = new Date().getTime();
+            if (now - lastTouchTime < 500) return;
+            if (!isInteractiveElement(e.target)) {
+              showOrHidePanel();
+            }
+          });
+        }
+      
+        window.addEventListener('load', () => {
+          document.querySelectorAll('.map-buttons, #info-panel').forEach(el => {
+            el.classList.add('hidden');
+          });
+      
+          setupInteractionHandlers();
+        });
+      </script>      
+
     <footer>
         <p>© 2025 MyMapApp | Powered by Google Maps, Firebase & APIs</p>
     </footer>
